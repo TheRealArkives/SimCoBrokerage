@@ -80,13 +80,13 @@ def calculate_divergence(current_price, data):
         average_price = np.mean(close_prices)
         divergence = ((current_price - average_price) / average_price) * 100
 
-        if divergence < -10:
+        if divergence < -7:
             recommendation = "Strong Buy"
-        elif divergence < -5:
+        elif divergence < -3:
             recommendation = "Buy"
-        elif -5 <= divergence <= 5:
+        elif -3 <= divergence <= 3:
             recommendation = "Neutral"
-        elif divergence > 5:
+        elif divergence > 3:
             recommendation = "Sell"
         else:
             recommendation = "Strong Sell"
