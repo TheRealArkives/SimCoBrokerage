@@ -6,7 +6,6 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import matplotlib.dates as mdates
 import numpy as np
 
-# Fonction pour récupérer les données du marché
 BASE_URL = "https://api.simcotools.com/v1/realms/"
 
 def get_market_price(realm, resource, quality, interval):
@@ -36,7 +35,6 @@ def get_market_summary(realm, resource, quality):
     else:
         return {"error": response.status_code}
 
-# Fonction pour mettre à jour les données dans l'interface graphique
 def fetch_data():
     try:
         realm = int(realm_entry.get())
@@ -51,7 +49,6 @@ def fetch_data():
         if "error" in market_data or "error" in vwap_data or "error" in summary_data:
             result_label.config(text="Erreur : Vérifiez les paramètres ou l'API.")
         else:
-            # Affichage des résultats principaux
             price = market_data['prices'][0]['price']
             datetime = market_data['prices'][0]['datetime']
             vwap = vwap_data['vwaps'][0]['vwap']
@@ -61,19 +58,14 @@ def fetch_data():
                 text=f"Prix : {price} | VWAP : {vwap} | Volume : {volume}\nDernière mise à jour : {datetime}"
             )
 
-            # Mettre à jour le graphique
             update_graph(summary_data, vwap)
-
-            # Calcul de la divergence et des recommandations
             calculate_divergence(price, summary_data)
     except Exception as e:
         result_label.config(text=f"Erreur : {str(e)}")
 
-# Fonction pour calculer une moyenne mobile simple (SMA)
 def calculate_sma(prices, window):
     return np.convolve(prices, np.ones(window) / window, mode='valid')
 
-# Fonction pour calculer la divergence et les recommandations
 def calculate_divergence(current_price, data):
     try:
         close_prices = [entry['closePrice'] for entry in data['summary']['latestClosePrices']]
@@ -95,33 +87,27 @@ def calculate_divergence(current_price, data):
     except Exception as e:
         result_label.config(text=f"Erreur de calcul : {str(e)}")
 
-# Fonction pour mettre à jour les graphiques
 def update_graph(data, vwap):
     try:
         close_prices = data['summary']['latestClosePrices']
         times = [entry['datetime'] for entry in close_prices]
         prices = [entry['closePrice'] for entry in close_prices]
 
-        # Conversion des temps pour un affichage correct
         times = mdates.datestr2num(times)
 
-        # Création du graphique
         figure.clear()
         ax = figure.add_subplot(111)
         ax.plot(times, prices, marker="o", linestyle="-", color="blue", label="Prix")
 
-        # Ajout du VWAP si activé
         if vwap_var.get():
             ax.axhline(y=vwap, color="green", linestyle="--", label="VWAP")
 
-        # Ajout de la moyenne mobile simple (SMA)
         if sma_var.get():
             sma_window = int(sma_length_entry.get())
-            if len(prices) >= sma_window:  # Vérifie que suffisamment de données sont disponibles
+            if len(prices) >= sma_window:
                 sma = calculate_sma(prices, window=sma_window)
                 ax.plot(times[-len(sma):], sma, color="orange", linestyle="-", label=f"SMA ({sma_window})")
 
-        # Compter et afficher le nombre de points
         points_count = len(prices)
         points_label.config(text=f"Nombre de points affichés : {points_count}")
 
@@ -131,7 +117,6 @@ def update_graph(data, vwap):
         ax.grid(True)
         ax.legend()
 
-        # Formate l'axe des x pour les dates
         ax.xaxis.set_major_formatter(mdates.DateFormatter("%H:%M"))
         ax.xaxis.set_major_locator(mdates.HourLocator(interval=1))
         figure.autofmt_xdate()
@@ -140,12 +125,10 @@ def update_graph(data, vwap):
     except KeyError:
         result_label.config(text="Erreur lors de la mise à jour du graphique.")
 
-# Interface utilisateur
 app = tk.Tk()
 app.title("SimCo Broker")
 app.geometry("800x700")
 
-# Paramètres de l'utilisateur
 frame_top = tk.Frame(app)
 frame_top.pack(pady=10)
 
@@ -176,12 +159,10 @@ interval_menu.grid(row=3, column=1, padx=5)
 fetch_button = tk.Button(frame_top, text="Obtenir les données", command=fetch_data)
 fetch_button.grid(row=4, column=0, columnspan=2, pady=10)
 
-# Case à cocher pour VWAP
 vwap_var = tk.BooleanVar(value=True)
 vwap_check = tk.Checkbutton(frame_top, text="Afficher VWAP", variable=vwap_var)
 vwap_check.grid(row=5, column=0, columnspan=2)
 
-# Case à cocher pour SMA
 sma_var = tk.BooleanVar(value=False)
 sma_check = tk.Checkbutton(frame_top, text="Afficher SMA", variable=sma_var)
 sma_check.grid(row=6, column=0, columnspan=2)
@@ -192,14 +173,12 @@ sma_length_entry = tk.Entry(frame_top)
 sma_length_entry.grid(row=7, column=1, padx=5)
 sma_length_entry.insert(0, "5")
 
-# Résultats
 result_label = tk.Label(app, text="", font=("Arial", 12))
 result_label.pack(pady=10)
 
 points_label = tk.Label(app, text="Nombre de points affichés : 0", font=("Arial", 10))
 points_label.pack(pady=5)
 
-# Graphique
 frame_bottom = tk.Frame(app)
 frame_bottom.pack(fill=tk.BOTH, expand=True)
 
@@ -207,5 +186,4 @@ figure = Figure(figsize=(8, 4), dpi=100)
 canvas = FigureCanvasTkAgg(figure, master=frame_bottom)
 canvas.get_tk_widget().pack(fill=tk.BOTH, expand=True)
 
-# Lancement de l'application
 app.mainloop()
